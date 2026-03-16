@@ -1,0 +1,2430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>브랜드 가격 결정 시스템 v4.1</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+  body { background:#0F1117; color:#E8EAF6; font-family:'Segoe UI',Tahoma,sans-serif; margin:0; padding:0; }
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:#1A1D2E}
+  ::-webkit-scrollbar-thumb{background:#3A3D5C;border-radius:4px}
+  ::-webkit-scrollbar-thumb:hover{background:#4A4D6C}
+  .card{background:#1A1D2E;border-radius:12px;border:1px solid #2A2D42;padding:20px}
+  .input-field{background:#22263A;border:1px solid #3A3D5C;border-radius:8px;padding:10px 14px;color:#E8EAF6;width:100%;outline:none;transition:border-color .2s;font-size:14px}
+  .input-field:focus{border-color:#6C63FF;box-shadow:0 0 0 3px rgba(108,99,255,0.1)}
+  .input-field::placeholder{color:#6B6E8C}
+  .btn-primary{background:#6C63FF;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-weight:600;cursor:pointer;transition:all .2s;font-size:14px}
+  .btn-primary:hover{background:#5B54E6;transform:translateY(-1px)}
+  .btn-primary:active{transform:translateY(0)}
+  .btn-secondary{background:#22263A;color:#E8EAF6;border:1px solid #3A3D5C;padding:10px 20px;border-radius:8px;cursor:pointer;transition:all .2s;font-size:14px;font-weight:500}
+  .btn-secondary:hover{background:#2A2E45;border-color:#4A4D6C}
+  .btn-danger{background:#FF6B6B;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;transition:all .2s;font-size:13px;font-weight:500}
+  .btn-danger:hover{background:#FF5252}
+  .btn-success{background:#00D4AA;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;transition:all .2s;font-size:14px;font-weight:600}
+  .btn-success:hover{background:#00BF99}
+  select.input-field{cursor:pointer}
+  select.input-field option{background:#22263A;color:#E8EAF6}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:8px;cursor:pointer;transition:all .2s;color:#9E9EBE;font-size:14px;font-weight:500}
+  .nav-item:hover{background:#22263A;color:#E8EAF6}
+  .nav-item.active{background:#6C63FF;color:#fff;font-weight:600}
+  .badge{display:inline-flex;align-items:center;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+  .badge-primary{background:#6C63FF22;color:#6C63FF}
+  .badge-success{background:#00D4AA22;color:#00D4AA}
+  .badge-warning{background:#FFD16622;color:#FFD166}
+  .badge-info{background:#4ECDC422;color:#4ECDC4}
+  .badge-danger{background:#FF6B6B22;color:#FF6B6B}
+  .highlight-row{background:#00D4AA18!important;border-left:3px solid #00D4AA}
+  table{width:100%;border-collapse:collapse}
+  table th{background:#22263A;padding:12px;text-align:left;font-size:13px;font-weight:600;color:#9E9EBE;border-bottom:2px solid #3A3D5C}
+  table td{padding:12px;border-bottom:1px solid #2A2D42;font-size:14px}
+  table tbody tr{transition:background .2s}
+  table tbody tr:hover{background:#22263A55}
+  .channel-bar{height:8px;border-radius:4px;background:linear-gradient(90deg,#6C63FF,#4ECDC4);transition:width .4s;box-shadow:0 2px 8px rgba(108,99,255,0.3)}
+  .animate-fade{animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .label{font-size:13px;font-weight:600;color:#9E9EBE;margin-bottom:6px;display:block}
+  .file-upload{border:2px dashed #3A3D5C;border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all .3s;background:#22263A}
+  .file-upload:hover{border-color:#6C63FF;background:#2A2E45}
+  .file-upload.dragover{border-color:#00D4AA;background:#00D4AA11}
+  input[type="file"]{display:none}
+  .preset-btn{padding:8px 16px;border-radius:6px;border:2px solid #3A3D5C;background:#22263A;color:#E8EAF6;cursor:pointer;transition:all .2s;font-size:13px;font-weight:500}
+  .preset-btn:hover{border-color:#6C63FF;background:#2A2E45}
+  .preset-btn.active{border-color:#6C63FF;background:#6C63FF;color:#fff}
+  .grid{display:grid;gap:16px}
+  .flex{display:flex}
+  .items-center{align-items:center}
+  .justify-between{justify-content:space-between}
+  .gap-2{gap:8px}
+  .gap-3{gap:12px}
+  .gap-4{gap:16px}
+  .mb-2{margin-bottom:8px}
+  .mb-3{margin-bottom:12px}
+  .mb-4{margin-bottom:16px}
+  .mt-4{margin-top:16px}
+  .mt-6{margin-top:24px}
+  .text-sm{font-size:13px}
+  .text-xs{font-size:12px}
+  .font-bold{font-weight:700}
+  .font-semibold{font-weight:600}
+  .text-gray{color:#9E9EBE}
+  .text-accent{color:#6C63FF}
+  .text-success{color:#00D4AA}
+  .text-warning{color:#FFD166}
+  .text-danger{color:#FF6B6B}
+  .opacity-60{opacity:0.6}
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button{opacity:1}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ═══════════════════════════════════════════════════════════════════
+// 샘플 제품 데이터 (테스트용)
+// ═══════════════════════════════════════════════════════════════════
+const SAMPLE_PRODUCTS = [
+  { id: 'F030110003', sku: 'F030110003', name: '라메종드미엘 블랑 드 라벤더 250g', brand: '라메종드미엘', cost: 11364, msrp: 70000 },
+  { id: 'F020210001', sku: 'F020210001', name: '클라라앤코 스퍼 글로우 영 콜라겐 20g*15포', brand: '클라라앤코', cost: 6732, msrp: 50000 },
+  { id: 'B050610010', sku: 'B050610010', name: '에이르보 토너 150ml', brand: '에이르보', cost: 2141, msrp: 30000 },
+  { id: 'B030110001', sku: 'B030110001', name: '브론리 세럼 30ml', brand: '브론리', cost: 7306, msrp: 57500 },
+  { id: 'B030110002', sku: 'B030110002', name: '브론리 크림 50ml', brand: '브론리', cost: 7306, msrp: 57500 }
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// 브랜드 파라미터 DB (v4.0 실측 보정값)
+// ═══════════════════════════════════════════════════════════════════
+const DEFAULT_BRAND_PARAMS = {
+  '라메종드미엘': {
+    channels: { '상시할인가': 0.929, '브랜드위크가': 0.843, '모바일방송가': 0.801, '홈쇼핑': 0.801 },
+    toolPrice: { marginMultiplier: 2.80, platformFee: 0.10, msrpFloor: 0.640 },
+    bundleDisc: { 1: 0.00, 2: 0.00, 3: 0.051, 4: 0.051, 5: 0.102, 6: 0.102, 7: 0.102, 8: 0.102 },
+    giftSetDisc: { 1: 0.00, 2: 0.00, 3: 0.03, 4: 0.03, 5: 0.05, 6: 0.05, 7: 0.05, 8: 0.05 }
+  },
+  '클라라앤코': {
+    channels: { '상시할인가': 0.936, '브랜드위크가': 0.736, '모바일방송가': 0.680, '홈쇼핑': 0.680 },
+    toolPrice: { marginMultiplier: 2.60, platformFee: 0.10, msrpFloor: 0.500 },
+    bundleDisc: { 1: 0.00, 2: 0.00, 3: 0.00, 4: 0.00, 5: 0.00, 6: 0.049, 7: 0.049, 8: 0.049 },
+    giftSetDisc: { 1: 0.00, 2: 0.00, 3: 0.00, 4: 0.00, 5: 0.00, 6: 0.03, 7: 0.03, 8: 0.03 }
+  },
+  '에이르보': {
+    channels: { '상시할인가': 0.800, '브랜드위크가': 0.700, '모바일방송가': 0.630, '홈쇼핑': 0.630 },
+    toolPrice: { marginMultiplier: 4.00, platformFee: 0.10, msrpFloor: 0.540 },
+    bundleDisc: { 1: 0.00, 2: 0.00, 3: 0.051, 4: 0.051, 5: 0.051, 6: 0.051, 7: 0.051, 8: 0.051 },
+    giftSetDisc: { 1: 0.00, 2: 0.00, 3: 0.03, 4: 0.03, 5: 0.03, 6: 0.03, 7: 0.03, 8: 0.03 }
+  },
+  '브론리': {
+    channels: { '상시할인가': 0.757, '브랜드위크가': 0.739, '모바일방송가': 0.680, '홈쇼핑': 0.680 },
+    toolPrice: { marginMultiplier: 2.30, platformFee: 0.12, msrpFloor: 0.430 },
+    bundleDisc: { 1: 0.00, 2: 0.00, 3: 0.00, 4: 0.00, 5: 0.00, 6: 0.00, 7: 0.00, 8: 0.00 },
+    giftSetDisc: { 1: 0.00, 2: 0.00, 3: 0.00, 4: 0.00, 5: 0.00, 6: 0.00, 7: 0.00, 8: 0.00 }
+  },
+  '기타': {
+    channels: { '상시할인가': 0.870, '브랜드위크가': 0.760, '모바일방송가': 0.720, '홈쇼핑': 0.680 },
+    toolPrice: { marginMultiplier: 3.00, platformFee: 0.10, msrpFloor: 0.500 },
+    bundleDisc: { 1: 0.00, 2: 0.00, 3: 0.051, 4: 0.051, 5: 0.102, 6: 0.102, 7: 0.102, 8: 0.102 },
+    giftSetDisc: { 1: 0.00, 2: 0.00, 3: 0.03, 4: 0.03, 5: 0.05, 6: 0.05, 7: 0.05, 8: 0.05 }
+  }
+};
+
+// 채널 순서 (역전 방지용)
+const CHANNEL_HIERARCHY = [
+  '소비자가', '자사몰', '오프라인', '상시할인가', '폐쇄몰',
+  '브랜드위크가', '원데이특가', '홈쇼핑', '모바일방송가', '공구가'
+];
+
+const CHANNEL_LABELS = {
+  '소비자가': '소비자가 (MSRP)',
+  '자사몰': '자사몰',
+  '오프라인': '오프라인',
+  '상시할인가': '상시 할인가',
+  '폐쇄몰': '폐쇄몰',
+  '브랜드위크가': '브랜드위크',
+  '원데이특가': '원데이 특가',
+  '홈쇼핑': '홈쇼핑',
+  '모바일방송가': '모바일 방송',
+  '공구가': '공구가 (Tool Price)'
+};
+
+// 포지셔닝 계수
+const POSITIONING_FACTORS = {
+  'LOW': 8,
+  'MID': 11,
+  'HIGH': 14,
+  'PREMIUM': 17
+};
+
+// 세트 프리셋
+const SET_PRESETS = [
+  { id: 'single', label: '단품', pattern: [1] },
+  { id: '124', label: '1/2/4 개입', pattern: [1, 2, 4] },
+  { id: '136', label: '1/3/6 개입', pattern: [1, 3, 6] },
+  { id: '148', label: '1/4/8 개입', pattern: [1, 4, 8] }
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// v4.0 가격 계산 엔진
+// ═══════════════════════════════════════════════════════════════════
+
+function calculateMSRP(v1, v2, v3, v4, cost) {
+  const anchor = v2 ? v2 : v1;
+  if (!anchor) return 0;
+
+  const positioningFactor = POSITIONING_FACTORS[v4] || 11;
+  let provisional = anchor;
+
+  const minMultiplier = 5.5;
+  const costFloor = cost ? cost * minMultiplier : 0;
+  provisional = Math.max(provisional, costFloor);
+
+  if (v3 && v3 > 0) {
+    const shippingRate = 1.25;
+    const premiumRate = 1.10;
+    const v3Ceiling = v3 * shippingRate * premiumRate;
+    provisional = Math.min(provisional, v3Ceiling);
+  }
+
+  return Math.round(provisional / 1000) * 1000;
+}
+
+function calculateChannelPrices(msrp, cost, brandName, coreChannel, brandParams) {
+  if (!msrp) return {};
+  
+  const params = brandParams[brandName] || brandParams['기타'];
+  const channels = params.channels;
+  const toolPriceParams = params.toolPrice;
+
+  const prices = { '소비자가': msrp };
+
+  const baseCoeffs = {
+    '자사몰': 0.92,
+    '오프라인': 0.90,
+    '상시할인가': channels['상시할인가'] || 0.87,
+    '폐쇄몰': 0.83,
+    '브랜드위크가': channels['브랜드위크가'] || 0.76,
+    '원데이특가': 0.74,
+    '홈쇼핑': channels['홈쇼핑'] || 0.68,
+    '모바일방송가': channels['모바일방송가'] || 0.72
+  };
+
+  const costBased = cost ? (cost * toolPriceParams.marginMultiplier) / (1 - toolPriceParams.platformFee) : 0;
+  const msrpBased = msrp * toolPriceParams.msrpFloor;
+  prices['공구가'] = Math.round(Math.max(costBased, msrpBased) / 1000) * 1000;
+
+  // 기본 채널 가격 계산
+  for (const [ch, coeff] of Object.entries(baseCoeffs)) {
+    prices[ch] = Math.round((msrp * coeff) / 1000) * 1000;
+  }
+
+  // 핵심채널 로직: 핵심채널을 기준으로 모든 채널 상향 조정
+  if (coreChannel && coreChannel !== '소비자가' && prices[coreChannel]) {
+    const coreChannelIndex = CHANNEL_HIERARCHY.indexOf(coreChannel);
+    const coreChannelPrice = prices[coreChannel];
+    
+    // 핵심채널보다 위에 있는 채널들 (더 비싼 채널들)
+    // 핵심채널 대비 최소 3-5% 더 비싸게 조정
+    for (let i = coreChannelIndex - 1; i >= 1; i--) {
+      const currentChannel = CHANNEL_HIERARCHY[i];
+      const nextChannel = CHANNEL_HIERARCHY[i + 1];
+      
+      if (prices[currentChannel] && prices[nextChannel]) {
+        const minGapFromCore = 0.03; // 3% 최소 간격
+        const minPrice = Math.round((prices[nextChannel] * (1 + minGapFromCore)) / 1000) * 1000;
+        
+        // 다음 채널보다 낮거나 간격이 좁으면 상향 조정
+        if (prices[currentChannel] < minPrice) {
+          prices[currentChannel] = minPrice;
+        }
+      }
+    }
+    
+    // 핵심채널보다 아래에 있는 채널들 (더 할인된 채널들)
+    // 핵심채널 가격보다 높으면 모두 상향 조정 (핵심채널을 최저가로)
+    for (let i = coreChannelIndex + 1; i < CHANNEL_HIERARCHY.length; i++) {
+      const currentChannel = CHANNEL_HIERARCHY[i];
+      
+      if (prices[currentChannel]) {
+        // 핵심채널보다 낮거나 같으면 핵심채널 가격으로 상향
+        if (prices[currentChannel] <= coreChannelPrice) {
+          // 공구가는 별도 로직이므로 제외
+          if (currentChannel !== '공구가') {
+            prices[currentChannel] = coreChannelPrice;
+          }
+        }
+        // 핵심채널보다 비싸면 그대로 유지하되 최소 간격 확보
+        else {
+          const minGap = 0.02; // 2% 최소 간격
+          const minPrice = Math.round((coreChannelPrice * (1 + minGap)) / 1000) * 1000;
+          if (prices[currentChannel] < minPrice) {
+            prices[currentChannel] = minPrice;
+          }
+        }
+      }
+    }
+  }
+
+  // 채널 역전 방지 (최종 검증)
+  const sortedChannels = [...CHANNEL_HIERARCHY];
+  for (let i = 1; i < sortedChannels.length; i++) {
+    const current = sortedChannels[i];
+    const prev = sortedChannels[i - 1];
+    if (prices[current] && prices[prev] && prices[current] > prices[prev]) {
+      prices[current] = prices[prev];
+    }
+  }
+
+  return prices;
+}
+
+function calculateSetPrices(items, brandName, brandParams, isGiftSet = false) {
+  if (!items.length) return {};
+
+  const params = brandParams[brandName] || brandParams['기타'];
+  if (!params) {
+    console.error('브랜드 파라미터를 찾을 수 없습니다:', brandName);
+    return {};
+  }
+  
+  const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
+  
+  // 선물세트 여부에 따라 할인율 선택 (안전하게 체크)
+  const discountTable = isGiftSet ? 
+    (params.giftSetDisc || params.bundleDisc || {}) : 
+    (params.bundleDisc || {});
+  
+  const bundleDiscRate = discountTable[totalQty] || 
+    discountTable[Math.max(...Object.keys(discountTable).map(Number))] || 
+    0;
+
+  const setPrices = {};
+
+  const sumMSRP = items.reduce((sum, item) => sum + item.msrp * item.quantity, 0);
+  setPrices['소비자가'] = Math.round((sumMSRP * (1 - bundleDiscRate)) / 1000) * 1000;
+
+  for (const ch of CHANNEL_HIERARCHY) {
+    if (ch === '소비자가') continue;
+    
+    const sumChannel = items.reduce((sum, item) => {
+      const chPrice = item.channelPrices[ch] || item.msrp;
+      return sum + chPrice * item.quantity;
+    }, 0);
+
+    setPrices[ch] = Math.round((sumChannel * (1 - bundleDiscRate)) / 1000) * 1000;
+  }
+
+  for (let i = 1; i < CHANNEL_HIERARCHY.length; i++) {
+    const current = CHANNEL_HIERARCHY[i];
+    const prev = CHANNEL_HIERARCHY[i - 1];
+    if (setPrices[current] && setPrices[prev] && setPrices[current] > setPrices[prev]) {
+      setPrices[current] = setPrices[prev];
+    }
+  }
+
+  return setPrices;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 메인 앱 컴포넌트
+// ═══════════════════════════════════════════════════════════════════
+
+function App() {
+  const [activeTab, setActiveTab] = useState('data');
+  const [brandParams, setBrandParams] = useState(() => {
+    const saved = localStorage.getItem('brandParams_v4');
+    let params = saved ? JSON.parse(saved) : DEFAULT_BRAND_PARAMS;
+    
+    // 마이그레이션: giftSetDisc 필드가 없으면 추가
+    let needsUpdate = false;
+    Object.keys(params).forEach(brandName => {
+      if (!params[brandName].giftSetDisc) {
+        console.log(`🔧 ${brandName}에 giftSetDisc 추가`);
+        params[brandName].giftSetDisc = DEFAULT_BRAND_PARAMS[brandName]?.giftSetDisc || 
+          DEFAULT_BRAND_PARAMS['기타'].giftSetDisc;
+        needsUpdate = true;
+      }
+    });
+    
+    if (needsUpdate) {
+      localStorage.setItem('brandParams_v4', JSON.stringify(params));
+      console.log('✅ brandParams 마이그레이션 완료');
+    }
+    
+    return params;
+  });
+  const [productMaster, setProductMaster] = useState(() => {
+    const saved = localStorage.getItem('productMaster_v41');
+    return saved ? JSON.parse(saved) : SAMPLE_PRODUCTS;
+  });
+
+  // Excel에서 로드된 브랜드 목록 추출
+  const availableBrands = useMemo(() => {
+    const brandsFromProducts = [...new Set(productMaster.map(p => p.brand).filter(b => b))];
+    
+    // 기존 brandParams의 브랜드와 병합
+    const allBrands = [...new Set([...Object.keys(brandParams), ...brandsFromProducts])];
+    
+    // '기타'를 맨 뒤로
+    return allBrands.filter(b => b !== '기타').sort().concat(['기타']);
+  }, [productMaster, brandParams]);
+
+  // productMaster 변경 시 새로운 브랜드의 기본 파라미터 추가
+  useEffect(() => {
+    const newBrands = availableBrands.filter(brand => !brandParams[brand] && brand !== '기타');
+    
+    if (newBrands.length > 0) {
+      const updatedParams = { ...brandParams };
+      newBrands.forEach(brand => {
+        updatedParams[brand] = { ...DEFAULT_BRAND_PARAMS['기타'] };
+      });
+      setBrandParams(updatedParams);
+    }
+  }, [availableBrands]);
+
+  useEffect(() => {
+    localStorage.setItem('brandParams_v4', JSON.stringify(brandParams));
+  }, [brandParams]);
+
+  useEffect(() => {
+    localStorage.setItem('productMaster_v41', JSON.stringify(productMaster));
+    console.log('🔄 Product Master Updated:', productMaster.length, 'products');
+    console.log('Products:', productMaster.slice(0, 3).map(p => `${p.sku} - ${p.name}`));
+  }, [productMaster]);
+
+  // 초기 로드 디버깅
+  useEffect(() => {
+    console.log('🚀 App Initialized');
+    console.log('📦 Product Master:', productMaster.length, 'products');
+    console.log('🏷️ Available Brands:', availableBrands);
+    console.log('💾 localStorage keys:', Object.keys(localStorage));
+  }, []);
+
+  const tabs = [
+    { id: 'data', icon: '📂', label: '데이터 관리' },
+    { id: 'pricing', icon: '💰', label: '가격 산출' },
+    { id: 'set', icon: '📦', label: '세트 구성' },
+    { id: 'brand', icon: '🎯', label: '브랜드 계수' },
+    { id: 'compare', icon: '📊', label: '시나리오 비교' }
+  ];
+
+  return (
+    <div style={{minHeight:'100vh',padding:'24px'}}>
+      <div style={{maxWidth:'1400px',margin:'0 auto'}}>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 style={{fontSize:'28px',fontWeight:'700',marginBottom:'4px'}}>
+              브랜드 가격 결정 시스템
+              <span className="badge badge-primary" style={{marginLeft:'12px',fontSize:'13px'}}>v4.1</span>
+              {productMaster.length > 0 && (
+                <span className="badge badge-success" style={{marginLeft:'8px',fontSize:'13px'}}>
+                  제품 {productMaster.length}개 로드됨
+                </span>
+              )}
+            </h1>
+            <p className="text-gray text-sm">Excel 업로드 + 자동 세트 구성 + 4변수 앵커</p>
+          </div>
+          <div className="flex gap-2">
+            <span className="badge badge-success">±10% 매치율 92.5%</span>
+            <span className="badge badge-info">평균 오차 2.52%</span>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mb-4">
+          {tabs.map(tab => (
+            <div
+              key={tab.id}
+              className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span style={{fontSize:'18px'}}>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="animate-fade">
+          {activeTab === 'data' && <DataTab productMaster={productMaster} setProductMaster={setProductMaster} />}
+          {activeTab === 'pricing' && <PricingTab brandParams={brandParams} productMaster={productMaster} availableBrands={availableBrands} />}
+          {activeTab === 'set' && <SetTab brandParams={brandParams} productMaster={productMaster} availableBrands={availableBrands} />}
+          {activeTab === 'brand' && <BrandTab brandParams={brandParams} setBrandParams={setBrandParams} availableBrands={availableBrands} />}
+          {activeTab === 'compare' && <CompareTab brandParams={brandParams} availableBrands={availableBrands} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 탭0: 데이터 관리 (Excel 업로드)
+// ═══════════════════════════════════════════════════════════════════
+
+function DataTab({ productMaster, setProductMaster }) {
+  const [dragOver, setDragOver] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState([]);
+  const [excelHeaders, setExcelHeaders] = useState([]);
+  const [columnMapping, setColumnMapping] = useState({ sku: -1, name: -1, brand: -1, cost: -1, msrp: -1 });
+  const [showMapping, setShowMapping] = useState(false);
+  const [rawData, setRawData] = useState([]);
+  const fileInputRef = useRef(null);
+
+  const handleFileSelect = async (file) => {
+    if (!file) return;
+    
+    setLoading(true);
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      // 헤더 찾기 (개선된 로직)
+      let headerRow = -1;
+      let maxKeywords = 0;
+      
+      for (let i = 0; i < Math.min(15, jsonData.length); i++) {
+        const row = jsonData[i];
+        if (!row || row.length === 0) continue;
+        
+        let keywordCount = 0;
+        const rowStr = row.map(c => String(c || '').toLowerCase()).join(' ');
+        
+        if (rowStr.includes('sku') || rowStr.includes('코드')) keywordCount++;
+        if (rowStr.includes('상품') || rowStr.includes('품명') || rowStr.includes('제품')) keywordCount++;
+        if (rowStr.includes('브랜드')) keywordCount++;
+        if (rowStr.includes('원가') || rowStr.includes('vat') || rowStr.includes('cost')) keywordCount++;
+        if (rowStr.includes('소비자') || rowStr.includes('msrp') || rowStr.includes('정가')) keywordCount++;
+        
+        if (keywordCount > maxKeywords) {
+          maxKeywords = keywordCount;
+          headerRow = i;
+        }
+      }
+
+      if (headerRow === -1) {
+        alert('⚠️ 헤더를 찾을 수 없습니다. 첫 번째 행을 헤더로 사용합니다.');
+        headerRow = 0;
+      }
+
+      const headers = jsonData[headerRow].map(h => String(h || '').trim());
+      const rows = jsonData.slice(headerRow + 1).filter(row => row && row.length > 0);
+
+      // 자동 컬럼 매핑
+      const autoMapping = {
+        sku: headers.findIndex(h => {
+          const hl = h.toLowerCase();
+          return hl.includes('sku') || hl.includes('코드') || hl.includes('품번');
+        }),
+        name: headers.findIndex(h => {
+          const hl = h.toLowerCase();
+          return hl.includes('상품') || hl.includes('품명') || hl.includes('제품명');
+        }),
+        brand: headers.findIndex(h => {
+          const hl = h.toLowerCase();
+          return hl.includes('브랜드');
+        }),
+        cost: headers.findIndex(h => {
+          const hl = h.toLowerCase();
+          return (hl.includes('원가') && hl.includes('vat')) || 
+                 (hl.includes('원가') && hl.includes('+')) ||
+                 hl.includes('원가(vat');
+        }),
+        msrp: headers.findIndex(h => {
+          const hl = h.toLowerCase();
+          return hl.includes('소비자') || hl.includes('msrp') || hl.includes('정가');
+        })
+      };
+
+      // 원가(VAT+)를 못 찾으면 일반 원가로 대체
+      if (autoMapping.cost === -1) {
+        autoMapping.cost = headers.findIndex(h => {
+          const hl = h.toLowerCase();
+          return hl.includes('원가') || hl.includes('cost');
+        });
+      }
+
+      setExcelHeaders(headers);
+      setRawData(rows);
+      setColumnMapping(autoMapping);
+      
+      // 매핑 확인이 필요한 경우
+      const missingFields = Object.entries(autoMapping).filter(([k, v]) => v === -1).map(([k]) => k);
+      
+      if (missingFields.length > 0) {
+        setShowMapping(true);
+        alert(`⚠️ 일부 컬럼을 자동으로 찾지 못했습니다: ${missingFields.join(', ')}\n컬럼 매핑을 확인해주세요.`);
+      } else {
+        // 자동 매핑 성공 시 바로 적용
+        applyMapping(autoMapping, rows);
+      }
+    } catch (err) {
+      alert(`❌ 파일 읽기 실패: ${err.message}`);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyMapping = (mapping, rows) => {
+    const products = rows
+      .filter(row => row && row.length > 0 && (mapping.sku >= 0 ? row[mapping.sku] : true))
+      .map((row, idx) => {
+        const sku = mapping.sku >= 0 ? row[mapping.sku] : `ITEM_${idx}`;
+        const name = mapping.name >= 0 ? row[mapping.name] : '';
+        const brand = mapping.brand >= 0 ? row[mapping.brand] : '';
+        const cost = mapping.cost >= 0 ? parseFloat(String(row[mapping.cost]).replace(/,/g, '')) || 0 : 0;
+        const msrp = mapping.msrp >= 0 ? parseFloat(String(row[mapping.msrp]).replace(/,/g, '')) || 0 : 0;
+        
+        return {
+          id: String(sku),
+          sku: String(sku),
+          name: String(name),
+          brand: String(brand),
+          cost,
+          msrp
+        };
+      })
+      .filter(p => p.sku && (p.name || p.cost || p.msrp));
+
+    setProductMaster(products);
+    setPreview(products.slice(0, 10));
+    setShowMapping(false);
+    alert(`✅ ${products.length}개 제품을 로드했습니다!`);
+  };
+
+  const confirmMapping = () => {
+    applyMapping(columnMapping, rawData);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  };
+
+  const clearData = () => {
+    if (confirm('모든 제품 데이터를 삭제하시겠습니까?')) {
+      setProductMaster([]);
+      setPreview([]);
+    }
+  };
+
+  return (
+    <div>
+      <div className="card mb-4">
+        <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>
+          📂 Excel 파일 업로드
+        </h2>
+        
+        <div
+          className={`file-upload ${dragOver ? 'dragover' : ''}`}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={(e) => handleFileSelect(e.target.files[0])}
+          />
+          <div style={{fontSize:'48px',marginBottom:'12px'}}>📊</div>
+          <div style={{fontSize:'16px',fontWeight:'600',marginBottom:'8px'}}>
+            {loading ? '파일 읽는 중...' : 'Excel 파일을 드래그하거나 클릭하여 선택'}
+          </div>
+          <div className="text-sm text-gray">
+            지원 형식: .xlsx, .xls | SKU, 상품명, 브랜드, 원가, 소비자가 컬럼 필요
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm font-semibold">
+            {productMaster.length > 0 ? (
+              <span className="text-success">✅ 총 {productMaster.length}개 제품 로드됨</span>
+            ) : (
+              <span className="text-danger">⚠️ 제품 없음</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {productMaster.length === 0 && (
+              <button 
+                className="btn-primary" 
+                onClick={() => {
+                  setProductMaster(SAMPLE_PRODUCTS);
+                  localStorage.setItem('productMaster_v41', JSON.stringify(SAMPLE_PRODUCTS));
+                  alert('✅ 샘플 데이터 5개를 로드했습니다!');
+                }}
+              >
+                📦 샘플 데이터 로드
+              </button>
+            )}
+            {productMaster.length > 0 && (
+              <button className="btn-danger" onClick={clearData}>
+                🗑️ 데이터 초기화
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showMapping && excelHeaders.length > 0 && (
+        <div className="card mt-4">
+          <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>
+            🔧 컬럼 매핑 확인
+          </h2>
+          <div className="text-sm text-gray mb-3">
+            Excel 파일의 각 컬럼이 어떤 데이터인지 확인하고 조정하세요
+          </div>
+          
+          <div className="grid" style={{gridTemplateColumns:'repeat(5, 1fr)',gap:'12px',marginBottom:'16px'}}>
+            <div>
+              <label className="label">SKU/품번</label>
+              <select className="input-field" value={columnMapping.sku} onChange={e => setColumnMapping({...columnMapping, sku: parseInt(e.target.value)})}>
+                <option value="-1">— 없음 —</option>
+                {excelHeaders.map((h, idx) => (
+                  <option key={idx} value={idx}>{h || `컬럼 ${idx+1}`}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">상품명 *</label>
+              <select className="input-field" value={columnMapping.name} onChange={e => setColumnMapping({...columnMapping, name: parseInt(e.target.value)})}>
+                <option value="-1">— 없음 —</option>
+                {excelHeaders.map((h, idx) => (
+                  <option key={idx} value={idx}>{h || `컬럼 ${idx+1}`}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">브랜드</label>
+              <select className="input-field" value={columnMapping.brand} onChange={e => setColumnMapping({...columnMapping, brand: parseInt(e.target.value)})}>
+                <option value="-1">— 없음 —</option>
+                {excelHeaders.map((h, idx) => (
+                  <option key={idx} value={idx}>{h || `컬럼 ${idx+1}`}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">원가(VAT+)</label>
+              <select className="input-field" value={columnMapping.cost} onChange={e => setColumnMapping({...columnMapping, cost: parseInt(e.target.value)})}>
+                <option value="-1">— 없음 —</option>
+                {excelHeaders.map((h, idx) => (
+                  <option key={idx} value={idx}>{h || `컬럼 ${idx+1}`}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">소비자가</label>
+              <select className="input-field" value={columnMapping.msrp} onChange={e => setColumnMapping({...columnMapping, msrp: parseInt(e.target.value)})}>
+                <option value="-1">— 없음 —</option>
+                {excelHeaders.map((h, idx) => (
+                  <option key={idx} value={idx}>{h || `컬럼 ${idx+1}`}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button className="btn-success" style={{flex:1}} onClick={confirmMapping}>
+              ✅ 매핑 확인 및 데이터 로드
+            </button>
+            <button className="btn-secondary" onClick={() => setShowMapping(false)}>
+              취소
+            </button>
+          </div>
+        </div>
+      )}
+
+      {preview.length > 0 && (
+        <div className="card">
+          <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>
+            📋 미리보기 (최대 10개)
+          </h2>
+          <table>
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>상품명</th>
+                <th>브랜드</th>
+                <th style={{textAlign:'right'}}>원가</th>
+                <th style={{textAlign:'right'}}>소비자가</th>
+              </tr>
+            </thead>
+            <tbody>
+              {preview.map(product => (
+                <tr key={product.id}>
+                  <td className="font-semibold">{product.sku}</td>
+                  <td>{product.name}</td>
+                  <td><span className="badge badge-primary">{product.brand}</span></td>
+                  <td style={{textAlign:'right'}}>{product.cost ? product.cost.toLocaleString() : '—'}</td>
+                  <td style={{textAlign:'right',fontWeight:'600'}}>{product.msrp ? product.msrp.toLocaleString() : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 탭1: 가격 산출 (기존과 유사하지만 제품 선택 추가)
+// ═══════════════════════════════════════════════════════════════════
+
+function PricingTab({ brandParams, productMaster, availableBrands }) {
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const [productSearchText, setProductSearchText] = useState('');
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [v1, setV1] = useState(50000);
+  const [v2, setV2] = useState('');
+  const [v3, setV3] = useState('');
+  const [v4, setV4] = useState('MID');
+  const [cost, setCost] = useState(8000);
+  const [brandName, setBrandName] = useState('라메종드미엘');
+  const [coreChannel, setCoreChannel] = useState('');
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
+
+  // 제품 선택 시 자동 입력
+  useEffect(() => {
+    if (selectedProduct) {
+      const product = productMaster.find(p => p.id === selectedProduct);
+      if (product) {
+        if (product.cost) setCost(product.cost);
+        if (product.msrp) setV2(product.msrp);
+        if (product.brand) {
+          const brandMatch = Object.keys(brandParams).find(b => 
+            product.brand.includes(b) || b.includes(product.brand)
+          );
+          if (brandMatch) setBrandName(brandMatch);
+        }
+      }
+    }
+  }, [selectedProduct, productMaster, brandParams]);
+
+  const msrp = useMemo(() => 
+    calculateMSRP(v1, parseFloat(v2) || 0, parseFloat(v3) || 0, v4, cost),
+    [v1, v2, v3, v4, cost]
+  );
+
+  const channelPrices = useMemo(() => 
+    calculateChannelPrices(msrp, cost, brandName, coreChannel, brandParams),
+    [msrp, cost, brandName, coreChannel, brandParams]
+  );
+
+  const anchor = useMemo(() => (v2 ? parseFloat(v2) : v1), [v1, v2]);
+  const v3Ceiling = useMemo(() => {
+    const v3Num = parseFloat(v3);
+    return v3Num ? Math.round(v3Num * 1.25 * 1.10 / 1000) * 1000 : null;
+  }, [v3]);
+
+  useEffect(() => {
+    if (!chartRef.current || !msrp) return;
+
+    const ctx = chartRef.current.getContext('2d');
+    
+    if (chartInstance.current) {
+      chartInstance.current.destroy();
+    }
+
+    const labels = CHANNEL_HIERARCHY.filter(ch => channelPrices[ch]);
+    const data = labels.map(ch => channelPrices[ch]);
+    const colors = labels.map(ch => 
+      ch === coreChannel ? '#00D4AA' : (ch === '공구가' ? '#FFD166' : '#6C63FF')
+    );
+
+    chartInstance.current = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels.map(ch => CHANNEL_LABELS[ch]),
+        datasets: [{
+          label: '채널가 (원)',
+          data: data,
+          backgroundColor: colors,
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1A1D2E',
+            titleColor: '#E8EAF6',
+            bodyColor: '#E8EAF6',
+            borderColor: '#3A3D5C',
+            borderWidth: 1,
+            padding: 12,
+            displayColors: false,
+            callbacks: {
+              label: (ctx) => `${ctx.parsed.y.toLocaleString()}원`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#2A2D42' },
+            ticks: { 
+              color: '#9E9EBE',
+              callback: (val) => (val / 1000).toFixed(0) + 'k'
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#9E9EBE', font: { size: 11 } }
+          }
+        }
+      }
+    });
+
+    return () => {
+      if (chartInstance.current) {
+        chartInstance.current.destroy();
+      }
+    };
+  }, [channelPrices, coreChannel, msrp]);
+
+  return (
+    <div className="grid" style={{gridTemplateColumns:'1fr 1fr',gap:'20px'}}>
+      <div className="card">
+        <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'20px'}}>📥 입력 변수</h2>
+        
+        <div className="mb-4">
+          <label className="label">
+            제품 검색 (선택사항)
+            {productMaster.length === 0 && (
+              <span className="text-danger" style={{marginLeft:'8px',fontSize:'11px'}}>⚠️ 제품 없음</span>
+            )}
+          </label>
+          {productMaster.length === 0 ? (
+            <input 
+              className="input-field" 
+              disabled 
+              placeholder="데이터 관리 탭에서 Excel 파일을 먼저 업로드하세요"
+            />
+          ) : (
+            <div style={{position:'relative'}}>
+              <input
+                className="input-field"
+                placeholder="상품코드 또는 상품명으로 검색... (예: F030 또는 라벤더)"
+                value={productSearchText}
+                onChange={e => {
+                  const value = e.target.value;
+                  setProductSearchText(value);
+                  setShowProductDropdown(true);
+                  
+                  if (!value) {
+                    setSelectedProduct('');
+                  }
+                }}
+                onFocus={() => setShowProductDropdown(true)}
+                onBlur={() => {
+                  setTimeout(() => setShowProductDropdown(false), 200);
+                }}
+              />
+              {showProductDropdown && productSearchText && (
+                <div style={{
+                  position:'absolute',
+                  top:'100%',
+                  left:0,
+                  right:0,
+                  maxHeight:'250px',
+                  overflowY:'auto',
+                  background:'#1A1D2E',
+                  border:'1px solid #6C63FF',
+                  borderRadius:'8px',
+                  marginTop:'4px',
+                  zIndex:1000,
+                  boxShadow:'0 4px 12px rgba(0,0,0,0.3)'
+                }}>
+                  {productMaster
+                    .filter(p => {
+                      const searchLower = productSearchText.toLowerCase();
+                      return p.sku.toLowerCase().includes(searchLower) ||
+                             p.name.toLowerCase().includes(searchLower);
+                    })
+                    .slice(0, 15)
+                    .map(p => (
+                      <div
+                        key={p.id}
+                        style={{
+                          padding:'12px 14px',
+                          cursor:'pointer',
+                          borderBottom:'1px solid #2A2D42',
+                          transition:'background 0.2s'
+                        }}
+                        onMouseDown={() => {
+                          setSelectedProduct(p.id);
+                          setProductSearchText(`[${p.sku}] [${p.name}]`);
+                          setShowProductDropdown(false);
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#22263A'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <div style={{fontSize:'13px',fontWeight:'600',marginBottom:'4px',color:'#E8EAF6'}}>
+                          <span style={{color:'#6C63FF'}}>[{p.sku}]</span> [{p.name}]
+                        </div>
+                        <div style={{fontSize:'11px',color:'#9E9EBE'}}>
+                          {p.brand} | 원가: {p.cost?.toLocaleString()}원 | MSRP: {p.msrp?.toLocaleString()}원
+                        </div>
+                      </div>
+                    ))}
+                  {productMaster.filter(p => {
+                    const searchLower = productSearchText.toLowerCase();
+                    return p.sku.toLowerCase().includes(searchLower) ||
+                           p.name.toLowerCase().includes(searchLower);
+                  }).length === 0 && (
+                    <div style={{padding:'20px',textAlign:'center',color:'#6B6E8C'}}>
+                      검색 결과가 없습니다
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          {productMaster.length === 0 && (
+            <div className="text-xs text-danger mt-1">💡 데이터 관리 탭에서 Excel 파일을 업로드하면 제품 목록이 나타납니다</div>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="label">
+            브랜드
+            {availableBrands && availableBrands.length > Object.keys(DEFAULT_BRAND_PARAMS).length && (
+              <span style={{marginLeft:'8px',fontSize:'11px',color:'#00D4AA'}}>
+                ✓ Excel에서 {availableBrands.length - Object.keys(DEFAULT_BRAND_PARAMS).length}개 추가됨
+              </span>
+            )}
+          </label>
+          <select className="input-field" value={brandName} onChange={e => setBrandName(e.target.value)}>
+            {(availableBrands || Object.keys(brandParams)).map(brand => (
+              <option key={brand} value={brand}>{brand}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid" style={{gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'16px'}}>
+          <div>
+            <label className="label">V1: 해외 공식가 *</label>
+            <input 
+              type="number" 
+              className="input-field" 
+              value={v1} 
+              onChange={e => setV1(parseFloat(e.target.value) || 0)}
+              placeholder="50000"
+            />
+          </div>
+          <div>
+            <label className="label">V2: 국내 공식가</label>
+            <input 
+              type="number" 
+              className="input-field" 
+              value={v2} 
+              onChange={e => setV2(e.target.value)}
+              placeholder="선택사항"
+            />
+          </div>
+        </div>
+
+        <div className="grid" style={{gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'16px'}}>
+          <div>
+            <label className="label">V3: 해외 직구가</label>
+            <input 
+              type="number" 
+              className="input-field" 
+              value={v3} 
+              onChange={e => setV3(e.target.value)}
+              placeholder="선택사항"
+            />
+          </div>
+          <div>
+            <label className="label">V4: 경쟁 포지션 *</label>
+            <select className="input-field" value={v4} onChange={e => setV4(e.target.value)}>
+              <option value="LOW">LOW (저가)</option>
+              <option value="MID">MID (중가)</option>
+              <option value="HIGH">HIGH (고가)</option>
+              <option value="PREMIUM">PREMIUM (프리미엄)</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="label">원가 (Cost)</label>
+          <input 
+            type="number" 
+            className="input-field" 
+            value={cost} 
+            onChange={e => setCost(parseFloat(e.target.value) || 0)}
+            placeholder="8000"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="label">
+            핵심 채널 (선택)
+            {coreChannel && <span style={{marginLeft:'8px',fontSize:'11px',color:'#00D4AA'}}>✓ 활성화</span>}
+          </label>
+          <select className="input-field" value={coreChannel} onChange={e => setCoreChannel(e.target.value)}>
+            <option value="">— 선택 안함 —</option>
+            {CHANNEL_HIERARCHY.slice(1).map(ch => (
+              <option key={ch} value={ch}>{CHANNEL_LABELS[ch]}</option>
+            ))}
+          </select>
+          {coreChannel && (
+            <div style={{marginTop:'8px',padding:'10px',background:'#6C63FF22',borderLeft:'3px solid #6C63FF',borderRadius:'4px'}}>
+              <div className="text-xs" style={{lineHeight:'1.6'}}>
+                <div style={{fontWeight:'600',marginBottom:'4px',color:'#6C63FF'}}>🎯 핵심채널 효과:</div>
+                <div style={{color:'#E8EAF6'}}>
+                  • <strong>{CHANNEL_LABELS[coreChannel]}</strong>를 기준으로 모든 채널 조정<br/>
+                  • 상위 채널: 핵심채널보다 <strong>최소 3% 이상 비싸게</strong> 상향<br/>
+                  • 하위 채널: 핵심채널 가격과 <strong>동일하거나 더 비싸게</strong> 상향<br/>
+                  • 결과: 핵심채널이 최저가로 유지됩니다
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{background:'#22263A',padding:'14px',borderRadius:'8px',marginTop:'20px'}}>
+          <div className="text-xs text-gray mb-2">📌 계산 로직 요약</div>
+          <div className="text-sm" style={{lineHeight:'1.6'}}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="badge badge-primary">앵커</span>
+              <span>{v2 ? `V2 (${parseFloat(v2).toLocaleString()}원)` : `V1 (${v1.toLocaleString()}원)`}</span>
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="badge badge-info">원가 하한</span>
+              <span>{(cost * 5.5).toLocaleString()}원</span>
+            </div>
+            {v3Ceiling && (
+              <div className="flex items-center gap-2 mb-1">
+                <span className="badge badge-warning">V3 상한</span>
+                <span>{v3Ceiling.toLocaleString()}원</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <span className="badge badge-success">최종 MSRP</span>
+              <span className="font-bold">{msrp.toLocaleString()}원</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="card mb-4">
+          <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>
+            💵 소비자가 (MSRP)
+          </h2>
+          <div style={{fontSize:'36px',fontWeight:'700',color:'#6C63FF',marginBottom:'8px'}}>
+            {msrp.toLocaleString()} 원
+          </div>
+          <div className="text-sm text-gray">
+            마진율: {cost ? ((msrp / cost - 1) * 100).toFixed(1) : '—'}%
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>📊 채널별 가격</h2>
+          
+          <div style={{height:'280px',marginBottom:'20px'}}>
+            <canvas ref={chartRef}></canvas>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>채널</th>
+                <th style={{textAlign:'right'}}>가격 (원)</th>
+                <th style={{textAlign:'right'}}>대비 MSRP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {CHANNEL_HIERARCHY.filter(ch => channelPrices[ch]).map((ch, idx, arr) => {
+                const price = channelPrices[ch];
+                const ratio = ((price / msrp) * 100).toFixed(1);
+                const isCore = ch === coreChannel;
+                
+                // 이전 채널과의 가격 차이 계산
+                let priceDiff = null;
+                if (idx > 0) {
+                  const prevCh = arr[idx - 1];
+                  const prevPrice = channelPrices[prevCh];
+                  if (prevPrice) {
+                    priceDiff = ((price - prevPrice) / prevPrice * 100).toFixed(1);
+                  }
+                }
+                
+                return (
+                  <tr key={ch} className={isCore ? 'highlight-row' : ''}>
+                    <td>
+                      {CHANNEL_LABELS[ch]}
+                      {isCore && <span className="badge badge-success" style={{marginLeft:'8px',fontSize:'10px'}}>핵심채널</span>}
+                      {ch === '공구가' && <span className="badge badge-warning" style={{marginLeft:'8px',fontSize:'10px'}}>별도 계산</span>}
+                    </td>
+                    <td style={{textAlign:'right',fontWeight:'600'}}>
+                      {price.toLocaleString()}
+                      {priceDiff && coreChannel && (
+                        <span style={{
+                          marginLeft:'8px',
+                          fontSize:'11px',
+                          color: parseFloat(priceDiff) > 0 ? '#FF6B6B' : '#00D4AA',
+                          fontWeight:'500'
+                        }}>
+                          ({priceDiff}%)
+                        </span>
+                      )}
+                    </td>
+                    <td style={{textAlign:'right',color:'#9E9EBE'}}>{ratio}%</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 탭2: 세트 구성 (자동 프리셋 추가)
+// ═══════════════════════════════════════════════════════════════════
+
+function SetTab({ brandParams, productMaster, availableBrands }) {
+  const [brandName, setBrandName] = useState('라메종드미엘');
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const [productSearchText, setProductSearchText] = useState('');
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState('single');
+  const [baseProduct, setBaseProduct] = useState(null);
+  const [sets, setSets] = useState([]);
+  
+  // 가격 계산 변수 (MSRP가 없을 때 사용)
+  const [v1, setV1] = useState(50000);
+  const [v2, setV2] = useState('');
+  const [v3, setV3] = useState('');
+  const [v4, setV4] = useState('MID');
+  const [cost, setCost] = useState(8000);
+
+  // 수동 구성 상태
+  const [manualMode, setManualMode] = useState(false);
+  const [manualItems, setManualItems] = useState([]);
+  const [isGiftSet, setIsGiftSet] = useState(false);
+  const [manualSetName, setManualSetName] = useState('');
+  const [manualSetPrice, setManualSetPrice] = useState('');
+
+  // 제품 선택 시 자동 입력
+  useEffect(() => {
+    if (selectedProduct) {
+      const product = productMaster.find(p => p.id === selectedProduct);
+      if (product) {
+        if (product.cost) setCost(product.cost);
+        if (product.msrp) setV2(product.msrp);
+      }
+    }
+  }, [selectedProduct, productMaster]);
+
+  // MSRP 자동 계산 (메모이제이션)
+  const calculatedMSRP = useMemo(() => {
+    return calculateMSRP(v1, v2, v3, v4, cost);
+  }, [v1, v2, v3, v4, cost]);
+
+  // 수동 구성: 제품 추가
+  const addManualItem = () => {
+    console.log('🟢 제품 추가 버튼 클릭!');
+    console.log('Selected Product:', selectedProduct);
+    
+    if (!selectedProduct) {
+      alert('제품을 먼저 선택해주세요!');
+      return;
+    }
+
+    const product = productMaster.find(p => p.id === selectedProduct);
+    console.log('Found Product:', product);
+    
+    if (!product) return;
+
+    const finalMSRP = product.msrp || calculatedMSRP;
+    const finalCost = product.cost || cost;
+    
+    console.log('Final MSRP:', finalMSRP, 'Final Cost:', finalCost);
+
+    if (!finalMSRP) {
+      alert('MSRP를 계산할 수 없습니다. V1 또는 V2를 입력해주세요!');
+      return;
+    }
+
+    const channelPrices = calculateChannelPrices(finalMSRP, finalCost, brandName, '', brandParams);
+
+    const newItem = {
+      id: product.id,
+      sku: product.sku,
+      name: product.name,
+      brand: product.brand,
+      msrp: finalMSRP,
+      cost: finalCost,
+      quantity: 1,
+      channelPrices,
+      isAccessory: false  // 부자재 여부 (기본값: 제품)
+    };
+    
+    console.log('✅ 새 아이템 추가:', newItem);
+    
+    setManualItems(prev => [...prev, newItem]);
+
+    setSelectedProduct('');
+    setProductSearchText('');
+  };
+
+  // 수동 구성: 제품 수량 변경
+  const updateManualItemQty = (index, qty) => {
+    setManualItems(prev => prev.map((item, i) => 
+      i === index ? { ...item, quantity: Math.max(1, parseInt(qty) || 1) } : item
+    ));
+  };
+
+  // 수동 구성: 부자재 토글
+  const toggleAccessory = (index) => {
+    setManualItems(prev => prev.map((item, i) => 
+      i === index ? { ...item, isAccessory: !item.isAccessory } : item
+    ));
+  };
+
+  // 수동 구성: 제품 삭제
+  const removeManualItem = (index) => {
+    setManualItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 수동 구성: 세트 생성
+  const createManualSet = () => {
+    console.log('🔵 세트 생성 버튼 클릭!');
+    
+    if (manualItems.length === 0) {
+      alert('세트에 제품을 추가해주세요!');
+      return;
+    }
+
+    if (!manualSetName.trim()) {
+      alert('세트 이름을 입력해주세요!');
+      return;
+    }
+
+    try {
+      // 부자재와 제품 분리
+      const products = manualItems.filter(item => !item.isAccessory);
+      const accessories = manualItems.filter(item => item.isAccessory);
+      
+      const totalQty = manualItems.reduce((sum, item) => sum + item.quantity, 0);
+      const productQty = products.reduce((sum, item) => sum + item.quantity, 0);
+      const totalMSRP = products.reduce((sum, item) => sum + item.msrp * item.quantity, 0);
+      
+      console.log('제품:', products.length, '부자재:', accessories.length);
+      
+      // 자동 가격 계산
+      const setPrices = calculateSetPrices(manualItems, brandName, brandParams, isGiftSet);
+      console.log('가격 계산 완료:', setPrices);
+      
+      // 채널별 개당 단가 계산
+      const channelUnitPrices = {};
+      if (totalMSRP > 0) {
+        for (const ch of CHANNEL_HIERARCHY) {
+          if (!setPrices[ch]) continue;
+          
+          channelUnitPrices[ch] = products.map(item => {
+            const itemRatio = (item.msrp * item.quantity) / totalMSRP;
+            const itemChannelPrice = setPrices[ch] * itemRatio;
+            const unitPrice = Math.round((itemChannelPrice / item.quantity) / 1000) * 1000;
+            
+            return {
+              name: item.name,
+              quantity: item.quantity,
+              msrp: item.msrp,
+              unitPrice: unitPrice,
+              totalPrice: unitPrice * item.quantity
+            };
+          });
+        }
+      }
+      
+      const newSet = {
+        id: `manual_${Date.now()}`,
+        name: manualSetName,
+        quantity: totalQty,
+        productQty: productQty,
+        items: manualItems,
+        prices: setPrices,
+        channelUnitPrices,
+        isManual: true,
+        isGiftSet,
+        hasAccessories: accessories.length > 0
+      };
+
+      console.log('✅ 세트 생성:', newSet);
+      setSets(prev => [...prev, newSet]);
+      
+      // 초기화
+      setManualItems([]);
+      setManualSetName('');
+      setManualSetPrice('');
+      setIsGiftSet(false);
+      
+      alert('세트가 생성되었습니다!');
+      
+    } catch (error) {
+      console.error('❌ 에러 발생:', error);
+      alert('세트 생성 중 에러가 발생했습니다: ' + error.message);
+    }
+  };
+
+  // 자동 프리셋 적용
+  const applyPreset = () => {
+    if (!selectedProduct) {
+      alert('제품을 먼저 선택해주세요!');
+      return;
+    }
+
+    const product = productMaster.find(p => p.id === selectedProduct);
+    if (!product) {
+      alert('제품을 찾을 수 없습니다!');
+      return;
+    }
+
+    const finalMSRP = product.msrp || calculatedMSRP;
+    const finalCost = product.cost || cost;
+
+    if (!finalMSRP) {
+      alert('MSRP를 계산할 수 없습니다. V1 또는 V2를 입력해주세요!');
+      return;
+    }
+
+    setBaseProduct({...product, msrp: finalMSRP, cost: finalCost});
+    const preset = SET_PRESETS.find(p => p.id === selectedPreset);
+    if (!preset) return;
+
+    const newSets = preset.pattern.map(qty => {
+      const channelPrices = calculateChannelPrices(finalMSRP, finalCost, brandName, '', brandParams);
+      const items = [{
+        id: product.id,
+        name: product.name,
+        msrp: finalMSRP,
+        cost: finalCost,
+        quantity: qty,
+        channelPrices
+      }];
+      const setPrices = calculateSetPrices(items, brandName, brandParams, false);
+      
+      return {
+        id: `${product.id}_x${qty}`,
+        name: `${product.name} × ${qty}개`,
+        quantity: qty,
+        items,
+        prices: setPrices,
+        isManual: false
+      };
+    });
+
+    setSets(newSets);
+  };
+
+  const clearSets = () => {
+    setSets([]);
+    setBaseProduct(null);
+    setManualItems([]);
+    setManualSetName('');
+    setManualSetPrice('');
+  };
+
+  return (
+    <div className="grid" style={{gridTemplateColumns:'1fr 1fr',gap:'20px'}}>
+      <div>
+        <div className="card mb-4">
+          <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>⚙️ 세트 구성 설정</h2>
+          
+          <div className="mb-4">
+            <label className="label">
+              브랜드
+              {availableBrands && availableBrands.length > Object.keys(DEFAULT_BRAND_PARAMS).length && (
+                <span style={{marginLeft:'8px',fontSize:'11px',color:'#00D4AA'}}>
+                  ✓ Excel에서 {availableBrands.length - Object.keys(DEFAULT_BRAND_PARAMS).length}개 추가됨
+                </span>
+              )}
+            </label>
+            <select className="input-field" value={brandName} onChange={e => setBrandName(e.target.value)}>
+              {(availableBrands || Object.keys(brandParams)).map(brand => (
+                <option key={brand} value={brand}>{brand}</option>
+              ))}
+            </select>
+          </div>
+
+          {productMaster.length === 0 ? (
+            <div style={{padding:'40px',textAlign:'center',background:'#22263A',borderRadius:'8px',color:'#6B6E8C'}}>
+              <div style={{fontSize:'48px',marginBottom:'12px'}}>📂</div>
+              <div style={{fontSize:'16px',marginBottom:'8px',fontWeight:'600'}}>제품 데이터가 없습니다</div>
+              <div style={{fontSize:'14px'}}>데이터 관리 탭에서 Excel 파일을 업로드해주세요</div>
+            </div>
+          ) : (
+            <>
+              <div className="mb-4">
+                <label className="label">
+                  제품 검색
+                  <span style={{marginLeft:'8px',fontSize:'11px',color:'#9E9EBE'}}>
+                    ({productMaster.length}개 제품)
+                  </span>
+                </label>
+                <div style={{position:'relative'}}>
+                  <input
+                    className="input-field"
+                    placeholder="상품코드 또는 상품명으로 검색... (예: F030 또는 라벤더)"
+                    value={productSearchText}
+                    onChange={e => {
+                      const value = e.target.value;
+                      console.log('Search input:', value);
+                      console.log('Product master count:', productMaster.length);
+                      setProductSearchText(value);
+                      setShowProductDropdown(true);
+                      
+                      if (!value) {
+                        setSelectedProduct('');
+                      }
+                    }}
+                    onFocus={() => {
+                      console.log('Focus - showing dropdown, products:', productMaster.length);
+                      setShowProductDropdown(true);
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowProductDropdown(false), 200);
+                    }}
+                  />
+                  {showProductDropdown && productSearchText && (() => {
+                    const filteredProducts = productMaster.filter(p => {
+                      const searchLower = productSearchText.toLowerCase();
+                      return p.sku.toLowerCase().includes(searchLower) ||
+                             p.name.toLowerCase().includes(searchLower);
+                    });
+                    console.log('Filtered products:', filteredProducts.length);
+                    
+                    return (
+                      <div style={{
+                        position:'absolute',
+                        top:'100%',
+                        left:0,
+                        right:0,
+                        maxHeight:'250px',
+                        overflowY:'auto',
+                        background:'#1A1D2E',
+                        border:'1px solid #6C63FF',
+                        borderRadius:'8px',
+                        marginTop:'4px',
+                        zIndex:1000,
+                        boxShadow:'0 4px 12px rgba(0,0,0,0.3)'
+                      }}>
+                        {filteredProducts.length === 0 ? (
+                          <div style={{padding:'20px',textAlign:'center',color:'#6B6E8C'}}>
+                            <div style={{fontSize:'14px',marginBottom:'8px'}}>검색 결과가 없습니다</div>
+                            <div style={{fontSize:'11px',color:'#6B6E8C'}}>
+                              총 {productMaster.length}개 제품 중 "{productSearchText}"와 일치하는 항목이 없습니다
+                            </div>
+                          </div>
+                        ) : (
+                          filteredProducts.slice(0, 15).map(p => (
+                            <div
+                              key={p.id}
+                              style={{
+                                padding:'12px 14px',
+                                cursor:'pointer',
+                                borderBottom:'1px solid #2A2D42',
+                                transition:'background 0.2s'
+                              }}
+                              onMouseDown={() => {
+                                setSelectedProduct(p.id);
+                                setProductSearchText(`[${p.sku}] [${p.name}]`);
+                                setShowProductDropdown(false);
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = '#22263A'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <div style={{fontSize:'13px',fontWeight:'600',marginBottom:'4px',color:'#E8EAF6'}}>
+                                <span style={{color:'#6C63FF'}}>[{p.sku}]</span> [{p.name}]
+                              </div>
+                              <div style={{fontSize:'11px',color:'#9E9EBE'}}>
+                                {p.brand} | 원가: {p.cost?.toLocaleString()}원 | MSRP: {p.msrp?.toLocaleString()}원
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              <div className="mb-4" style={{background:'#22263A',padding:'16px',borderRadius:'8px',border:'1px solid #3A3D5C'}}>
+                <div className="text-sm font-semibold mb-3" style={{color:'#00D4AA'}}>
+                  💰 가격 계산 변수 (MSRP 없을 때 사용)
+                </div>
+                
+                <div className="grid" style={{gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'12px'}}>
+                  <div>
+                    <label className="label" style={{fontSize:'11px'}}>V1: 해외 공식가</label>
+                    <input 
+                      type="number" 
+                      className="input-field" 
+                      value={v1} 
+                      onChange={e => setV1(parseFloat(e.target.value) || 0)}
+                      placeholder="50000"
+                      style={{fontSize:'13px',padding:'8px'}}
+                    />
+                  </div>
+                  <div>
+                    <label className="label" style={{fontSize:'11px'}}>V2: 국내 공식가</label>
+                    <input 
+                      type="number" 
+                      className="input-field" 
+                      value={v2} 
+                      onChange={e => setV2(e.target.value)}
+                      placeholder="선택사항"
+                      style={{fontSize:'13px',padding:'8px'}}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid" style={{gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'12px'}}>
+                  <div>
+                    <label className="label" style={{fontSize:'11px'}}>V3: 해외 직구가</label>
+                    <input 
+                      type="number" 
+                      className="input-field" 
+                      value={v3} 
+                      onChange={e => setV3(e.target.value)}
+                      placeholder="선택사항"
+                      style={{fontSize:'13px',padding:'8px'}}
+                    />
+                  </div>
+                  <div>
+                    <label className="label" style={{fontSize:'11px'}}>V4: 경쟁 포지션</label>
+                    <select 
+                      className="input-field" 
+                      value={v4} 
+                      onChange={e => setV4(e.target.value)}
+                      style={{fontSize:'13px',padding:'8px'}}
+                    >
+                      <option value="LOW">LOW</option>
+                      <option value="MID">MID</option>
+                      <option value="HIGH">HIGH</option>
+                      <option value="PREMIUM">PREMIUM</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label" style={{fontSize:'11px'}}>원가 (VAT+)</label>
+                    <input 
+                      type="number" 
+                      className="input-field" 
+                      value={cost} 
+                      onChange={e => setCost(parseFloat(e.target.value) || 0)}
+                      placeholder="8000"
+                      style={{fontSize:'13px',padding:'8px'}}
+                    />
+                  </div>
+                </div>
+
+                <div style={{padding:'10px',background:'#1A1D2E',borderRadius:'6px',fontSize:'12px',color:'#9E9EBE'}}>
+                  <div className="flex justify-between items-center">
+                    <span>계산된 MSRP:</span>
+                    <span style={{fontSize:'14px',fontWeight:'600',color:'#00D4AA'}}>
+                      {calculatedMSRP ? calculatedMSRP.toLocaleString() : '—'}원
+                    </span>
+                  </div>
+                  <div className="text-xs mt-1" style={{color:'#6B6E8C'}}>
+                    제품에 MSRP가 없으면 위 값이 자동 적용됩니다
+                  </div>
+                </div>
+              </div>
+
+              {/* 모드 선택 버튼 */}
+              <div className="mb-4" style={{display:'flex',gap:'10px'}}>
+                <button 
+                  className={`btn ${!manualMode ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{flex:1,padding:'12px',fontSize:'14px',fontWeight:'600'}}
+                  onClick={() => setManualMode(false)}
+                >
+                  🎯 자동 프리셋
+                </button>
+                <button 
+                  className={`btn ${manualMode ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{flex:1,padding:'12px',fontSize:'14px',fontWeight:'600'}}
+                  onClick={() => setManualMode(true)}
+                >
+                  ✋ 수동 구성
+                </button>
+              </div>
+
+              {!manualMode ? (
+                <>
+                  {/* 자동 프리셋 모드 */}
+                  <div className="mb-4">
+                    <label className="label">세트 구성 프리셋</label>
+                    <div className="flex gap-2">
+                      {SET_PRESETS.map(preset => (
+                        <button
+                          key={preset.id}
+                          className={`preset-btn ${selectedPreset === preset.id ? 'active' : ''}`}
+                          onClick={() => setSelectedPreset(preset.id)}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="text-xs text-gray mt-2">
+                      선택: {SET_PRESETS.find(p => p.id === selectedPreset)?.pattern.join(', ')}개 세트 자동 생성
+                    </div>
+                  </div>
+
+                  <button className="btn-success" style={{width:'100%'}} onClick={applyPreset}>
+                    ✨ 세트 자동 생성
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* 수동 구성 모드 */}
+                  <div className="mb-4">
+                    <button 
+                      className="btn-success" 
+                      style={{width:'100%',marginBottom:'12px'}}
+                      onClick={addManualItem}
+                    >
+                      ➕ 선택 제품 추가
+                    </button>
+
+                    {manualItems.length > 0 && (
+                      <div style={{background:'#22263A',padding:'16px',borderRadius:'8px',marginBottom:'12px'}}>
+                        <div className="font-semibold mb-2" style={{fontSize:'14px'}}>
+                          📦 세트 구성 항목 ({manualItems.length}개)
+                        </div>
+                        {manualItems.map((item, idx) => (
+                          <div key={idx} style={{
+                            background:'#1A1D2E',
+                            padding:'10px',
+                            borderRadius:'6px',
+                            marginBottom:'8px',
+                            display:'flex',
+                            alignItems:'center',
+                            gap:'10px'
+                          }}>
+                            <div style={{flex:1,fontSize:'12px'}}>
+                              <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'4px'}}>
+                                <span style={{fontWeight:'600'}}>{item.name}</span>
+                                {item.isAccessory && (
+                                  <span style={{
+                                    fontSize:'10px',
+                                    background:'#9C27B0',
+                                    color:'white',
+                                    padding:'2px 6px',
+                                    borderRadius:'4px',
+                                    fontWeight:'600'
+                                  }}>
+                                    부자재
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{color:'#9E9EBE',fontSize:'11px'}}>
+                                {item.msrp?.toLocaleString()}원
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => toggleAccessory(idx)}
+                              style={{
+                                padding:'6px 10px',
+                                background: item.isAccessory ? '#9C27B0' : '#3A3D5C',
+                                border:'none',
+                                borderRadius:'4px',
+                                color:'white',
+                                cursor:'pointer',
+                                fontSize:'10px',
+                                whiteSpace:'nowrap'
+                              }}
+                              title="부자재로 표시 (가격 계산 제외)"
+                            >
+                              {item.isAccessory ? '📦' : '🎁'}
+                            </button>
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={e => updateManualItemQty(idx, e.target.value)}
+                              style={{
+                                width:'60px',
+                                padding:'6px',
+                                background:'#0F1117',
+                                border:'1px solid #3A3D5C',
+                                borderRadius:'4px',
+                                color:'white',
+                                textAlign:'center'
+                              }}
+                            />
+                            <button
+                              onClick={() => removeManualItem(idx)}
+                              style={{
+                                padding:'6px 10px',
+                                background:'#ef5350',
+                                border:'none',
+                                borderRadius:'4px',
+                                color:'white',
+                                cursor:'pointer',
+                                fontSize:'12px'
+                              }}
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        ))}
+
+                        <div style={{marginTop:'16px',paddingTop:'16px',borderTop:'1px solid #3A3D5C'}}>
+                          <div className="mb-3">
+                            <label className="label" style={{fontSize:'12px'}}>세트 이름</label>
+                            <input
+                              className="input-field"
+                              placeholder="예: 라메종드미엘 스페셜 세트"
+                              value={manualSetName}
+                              onChange={e => setManualSetName(e.target.value)}
+                              style={{fontSize:'13px',padding:'8px'}}
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                            <label className="label" style={{fontSize:'12px'}}>
+                              세트 판매가 (선택사항)
+                              <span style={{marginLeft:'6px',fontSize:'10px',color:'#9E9EBE'}}>
+                                비워두면 자동 계산
+                              </span>
+                            </label>
+                            <input
+                              type="number"
+                              className="input-field"
+                              placeholder="수동으로 가격 지정"
+                              value={manualSetPrice}
+                              onChange={e => setManualSetPrice(e.target.value)}
+                              style={{fontSize:'13px',padding:'8px'}}
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                            <label style={{
+                              display:'flex',
+                              alignItems:'center',
+                              gap:'8px',
+                              cursor:'pointer',
+                              fontSize:'14px'
+                            }}>
+                              <input
+                                type="checkbox"
+                                checked={isGiftSet}
+                                onChange={e => setIsGiftSet(e.target.checked)}
+                                style={{width:'18px',height:'18px',cursor:'pointer'}}
+                              />
+                              <span style={{fontWeight:'600'}}>🎁 선물세트</span>
+                              <span style={{fontSize:'11px',color:'#9E9EBE'}}>
+                                (할인율 낮음)
+                              </span>
+                            </label>
+                          </div>
+
+                          <button 
+                            className="btn-success" 
+                            style={{width:'100%'}}
+                            onClick={createManualSet}
+                          >
+                            ✅ 세트 생성
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+
+        {(baseProduct || manualItems.length > 0) && (
+          <div className="card">
+            {baseProduct ? (
+              <>
+                <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>📦 기준 제품 정보</h2>
+                <div style={{background:'#22263A',padding:'14px',borderRadius:'8px'}}>
+                  <div className="font-semibold mb-2">{baseProduct.name}</div>
+                  <div className="text-sm text-gray mb-1">SKU: {baseProduct.sku}</div>
+                  <div className="text-sm text-gray mb-1">브랜드: {baseProduct.brand}</div>
+                  <div className="text-sm">
+                    원가: {baseProduct.cost?.toLocaleString()}원 | 
+                    MSRP: <span className="text-accent font-semibold">{baseProduct.msrp?.toLocaleString()}원</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>📝 구성 중인 세트</h2>
+                <div style={{background:'#22263A',padding:'14px',borderRadius:'8px'}}>
+                  <div className="text-sm text-gray mb-2">
+                    총 {manualItems.reduce((sum, item) => sum + item.quantity, 0)}개 제품
+                  </div>
+                  <div className="text-sm">
+                    총 MSRP: <span className="text-accent font-semibold">
+                      {manualItems.reduce((sum, item) => sum + item.msrp * item.quantity, 0).toLocaleString()}원
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+            <button className="btn-danger mt-3" style={{width:'100%'}} onClick={clearSets}>
+              🗑️ 전체 초기화
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div>
+        {sets.length === 0 ? (
+          <div className="card" style={{padding:'80px',textAlign:'center',color:'#6B6E8C'}}>
+            <div style={{fontSize:'64px',marginBottom:'16px'}}>📦</div>
+            <div style={{fontSize:'16px'}}>
+              {manualMode ? 
+                '왼쪽에서 제품을 추가하고 세트를 생성하세요' : 
+                '왼쪽에서 제품과 프리셋을 선택 후 세트 자동 생성 버튼을 클릭하세요'
+              }
+            </div>
+          </div>
+        ) : (
+          <div className="card">
+            <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>
+              💎 생성된 세트 ({sets.length}개)
+            </h2>
+
+            {sets.map((set, idx) => (
+              <div key={set.id} style={{background:'#22263A',padding:'16px',borderRadius:'8px',marginBottom:'12px'}}>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="font-semibold mb-1">
+                      {set.name}
+                      {set.isManual && (
+                        <span style={{
+                          marginLeft:'8px',
+                          fontSize:'10px',
+                          background:'#6C63FF',
+                          color:'white',
+                          padding:'2px 8px',
+                          borderRadius:'4px',
+                          fontWeight:'600'
+                        }}>
+                          수동
+                        </span>
+                      )}
+                      {set.isGiftSet && (
+                        <span style={{
+                          marginLeft:'8px',
+                          fontSize:'10px',
+                          background:'#ff9800',
+                          color:'white',
+                          padding:'2px 8px',
+                          borderRadius:'4px',
+                          fontWeight:'600'
+                        }}>
+                          🎁 선물세트
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray">
+                      총 {set.quantity}개
+                      {!set.isManual && ` | 번들 할인 ${(brandParams[brandName].bundleDisc[set.quantity] * 100).toFixed(1)}%`}
+                      {set.isManual && set.isGiftSet && ` | 선물세트 할인 ${((brandParams[brandName].giftSetDisc[set.quantity] || 0) * 100).toFixed(1)}%`}
+                      {set.isManual && !set.isGiftSet && ` | 일반 할인 ${((brandParams[brandName].bundleDisc[set.quantity] || 0) * 100).toFixed(1)}%`}
+                    </div>
+                    {set.unitPrice && (
+                      <div className="text-xs" style={{color:'#00D4AA',marginTop:'4px'}}>
+                        💡 개당 단가: {set.unitPrice.toLocaleString()}원 (타채널 비교용)
+                      </div>
+                    )}
+                  </div>
+                  <div style={{textAlign:'right'}}>
+                    <div className="text-xs text-gray">세트 MSRP</div>
+                    <div style={{fontSize:'20px',fontWeight:'700',color:'#00D4AA'}}>
+                      {set.prices['소비자가']?.toLocaleString()}원
+                    </div>
+                    {set.manualPrice && (
+                      <div className="text-xs" style={{color:'#FFD166',marginTop:'4px'}}>
+                        (수동 입력가)
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {set.isManual && set.items.length > 0 && (
+                  <div style={{marginBottom:'12px',padding:'10px',background:'#1A1D2E',borderRadius:'6px'}}>
+                    <div className="text-xs font-semibold mb-2" style={{color:'#9E9EBE'}}>구성 제품</div>
+                    {set.items.filter(item => !item.isAccessory).map((item, i) => (
+                      <div key={i} className="text-xs" style={{marginBottom:'4px',color:'#E8EAF6'}}>
+                        • {item.name} × {item.quantity}개 ({(item.msrp * item.quantity).toLocaleString()}원)
+                      </div>
+                    ))}
+                    {set.hasAccessories && (
+                      <>
+                        <div className="text-xs font-semibold mt-2 mb-1" style={{color:'#9C27B0'}}>부자재 (가격 계산 제외)</div>
+                        {set.items.filter(item => item.isAccessory).map((item, i) => (
+                          <div key={i} className="text-xs" style={{marginBottom:'4px',color:'#9E9EBE'}}>
+                            • {item.name} × {item.quantity}개
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{fontSize:'12px',padding:'8px'}}>채널</th>
+                      <th style={{textAlign:'right',fontSize:'12px',padding:'8px'}}>세트 가격</th>
+                      <th style={{textAlign:'right',fontSize:'12px',padding:'8px'}}>MSRP 비율</th>
+                      {set.channelUnitPrices && (
+                        <th style={{textAlign:'right',fontSize:'12px',padding:'8px'}}>개당 단가 (평균)</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {CHANNEL_HIERARCHY.filter(ch => ch !== '소비자가' && set.prices[ch]).map(ch => {
+                      const price = set.prices[ch];
+                      const ratio = ((price / set.prices['소비자가']) * 100).toFixed(1);
+                      
+                      // 개당 단가 평균 계산 (부자재 제외)
+                      let avgUnitPrice = null;
+                      if (set.channelUnitPrices && set.channelUnitPrices[ch]) {
+                        const totalPrice = set.channelUnitPrices[ch].reduce((sum, p) => sum + p.totalPrice, 0);
+                        const totalQty = set.channelUnitPrices[ch].reduce((sum, p) => sum + p.quantity, 0);
+                        avgUnitPrice = Math.round((totalPrice / totalQty) / 1000) * 1000;
+                      }
+                      
+                      return (
+                        <tr key={ch}>
+                          <td style={{fontSize:'12px',padding:'6px'}}>
+                            {CHANNEL_LABELS[ch]}
+                            {ch === '공구가' && <span style={{marginLeft:'6px',fontSize:'10px',background:'#FFD166',color:'#1A1D2E',padding:'2px 6px',borderRadius:'4px',fontWeight:'600'}}>별도계산</span>}
+                          </td>
+                          <td style={{textAlign:'right',fontSize:'12px',padding:'6px',fontWeight:'600'}}>
+                            {price.toLocaleString()}원
+                          </td>
+                          <td style={{textAlign:'right',fontSize:'12px',padding:'6px',color:'#9E9EBE'}}>
+                            {ratio}%
+                          </td>
+                          {set.channelUnitPrices && (
+                            <td style={{textAlign:'right',fontSize:'12px',padding:'6px',color:'#00D4AA'}}>
+                              {avgUnitPrice ? `${avgUnitPrice.toLocaleString()}원` : '-'}
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                
+                {/* 채널별 개당 단가 상세 (펼치기/접기) */}
+                {set.channelUnitPrices && set.isManual && (
+                  <details style={{marginTop:'12px'}}>
+                    <summary style={{
+                      cursor:'pointer',
+                      fontSize:'12px',
+                      fontWeight:'600',
+                      color:'#00D4AA',
+                      padding:'8px',
+                      background:'#1A1D2E',
+                      borderRadius:'6px'
+                    }}>
+                      📊 채널별 제품 단가 상세 보기 (타채널 비교용)
+                    </summary>
+                    <div style={{marginTop:'8px',padding:'10px',background:'#1A1D2E',borderRadius:'6px'}}>
+                      {Object.entries(set.channelUnitPrices).map(([ch, products]) => (
+                        <div key={ch} style={{marginBottom:'12px'}}>
+                          <div className="text-xs font-semibold mb-1" style={{color:'#9E9EBE'}}>
+                            {CHANNEL_LABELS[ch]}
+                          </div>
+                          {products.map((prod, i) => (
+                            <div key={i} className="text-xs" style={{
+                              marginBottom:'4px',
+                              color:'#E8EAF6',
+                              display:'flex',
+                              justifyContent:'space-between'
+                            }}>
+                              <span>• {prod.name} × {prod.quantity}개</span>
+                              <span style={{color:'#00D4AA',fontWeight:'600'}}>
+                                개당 {prod.unitPrice.toLocaleString()}원
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 탭3: 브랜드 계수 관리 (기존과 동일)
+// ═══════════════════════════════════════════════════════════════════
+
+function BrandTab({ brandParams, setBrandParams, availableBrands }) {
+  const [selectedBrand, setSelectedBrand] = useState('라메종드미엘');
+
+  const updateChannelCoeff = (brand, channel, value) => {
+    setBrandParams(prev => ({
+      ...prev,
+      [brand]: {
+        ...prev[brand],
+        channels: {
+          ...prev[brand].channels,
+          [channel]: parseFloat(value) || 0
+        }
+      }
+    }));
+  };
+
+  const updateToolParam = (brand, param, value) => {
+    setBrandParams(prev => ({
+      ...prev,
+      [brand]: {
+        ...prev[brand],
+        toolPrice: {
+          ...prev[brand].toolPrice,
+          [param]: parseFloat(value) || 0
+        }
+      }
+    }));
+  };
+
+  const resetToDefault = () => {
+    if (confirm('모든 브랜드 계수를 기본값으로 초기화하시겠습니까?')) {
+      setBrandParams(DEFAULT_BRAND_PARAMS);
+    }
+  };
+
+  const params = brandParams[selectedBrand];
+
+  return (
+    <div className="grid" style={{gridTemplateColumns:'1fr 2fr',gap:'20px'}}>
+      <div className="card">
+        <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>
+          🎯 브랜드 선택
+          {availableBrands && availableBrands.length > Object.keys(DEFAULT_BRAND_PARAMS).length && (
+            <div className="text-xs text-success mt-1">
+              ✓ Excel에서 {availableBrands.length - Object.keys(DEFAULT_BRAND_PARAMS).length}개 브랜드 추가됨
+            </div>
+          )}
+        </h2>
+        <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+          {(availableBrands || Object.keys(brandParams)).map(brand => (
+            <div
+              key={brand}
+              className={`btn-secondary ${selectedBrand === brand ? 'highlight-row' : ''}`}
+              onClick={() => setSelectedBrand(brand)}
+              style={{textAlign:'left',fontWeight: selectedBrand === brand ? '600' : '500'}}
+            >
+              {brand}
+            </div>
+          ))}
+        </div>
+        <button className="btn-danger mt-4" style={{width:'100%'}} onClick={resetToDefault}>
+          🔄 기본값으로 초기화
+        </button>
+      </div>
+
+      <div>
+        <div className="card mb-4">
+          <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>
+            📊 {selectedBrand} — 채널 계수
+          </h2>
+          <div className="text-xs text-gray mb-3">각 채널의 MSRP 대비 비율을 설정합니다 (0.00 ~ 1.00)</div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>채널</th>
+                <th style={{textAlign:'right'}}>계수</th>
+                <th style={{width:'200px'}}>비주얼</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(params.channels).map(([channel, coeff]) => (
+                <tr key={channel}>
+                  <td>{channel}</td>
+                  <td style={{textAlign:'right'}}>
+                    <input 
+                      type="number"
+                      step="0.001"
+                      min="0"
+                      max="1"
+                      value={coeff}
+                      onChange={e => updateChannelCoeff(selectedBrand, channel, e.target.value)}
+                      className="input-field"
+                      style={{width:'80px',textAlign:'right',padding:'6px 10px'}}
+                    />
+                  </td>
+                  <td>
+                    <div style={{background:'#22263A',height:'8px',borderRadius:'4px',overflow:'hidden'}}>
+                      <div 
+                        className="channel-bar" 
+                        style={{width:`${coeff * 100}%`}}
+                      ></div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="card">
+          <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>
+            🔧 {selectedBrand} — 공구가 파라미터
+          </h2>
+          <div className="text-xs text-gray mb-3">
+            공구가 = max(원가 × 마진배수 ÷ (1 - 플랫폼수수료), MSRP × MSRP하한비율)
+          </div>
+
+          <div className="grid" style={{gridTemplateColumns:'1fr 1fr 1fr',gap:'16px'}}>
+            <div>
+              <label className="label">마진 배수</label>
+              <input 
+                type="number"
+                step="0.1"
+                value={params.toolPrice.marginMultiplier}
+                onChange={e => updateToolParam(selectedBrand, 'marginMultiplier', e.target.value)}
+                className="input-field"
+              />
+              <div className="text-xs text-gray mt-1">예: 2.80 = 280% 마진</div>
+            </div>
+            <div>
+              <label className="label">플랫폼 수수료</label>
+              <input 
+                type="number"
+                step="0.01"
+                min="0"
+                max="1"
+                value={params.toolPrice.platformFee}
+                onChange={e => updateToolParam(selectedBrand, 'platformFee', e.target.value)}
+                className="input-field"
+              />
+              <div className="text-xs text-gray mt-1">예: 0.10 = 10%</div>
+            </div>
+            <div>
+              <label className="label">MSRP 하한 비율</label>
+              <input 
+                type="number"
+                step="0.01"
+                min="0"
+                max="1"
+                value={params.toolPrice.msrpFloor}
+                onChange={e => updateToolParam(selectedBrand, 'msrpFloor', e.target.value)}
+                className="input-field"
+              />
+              <div className="text-xs text-gray mt-1">예: 0.64 = MSRP의 64%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 탭4: 시나리오 비교 (기존과 동일)
+// ═══════════════════════════════════════════════════════════════════
+
+function CompareTab({ brandParams, availableBrands }) {
+  const [v1, setV1] = useState(50000);
+  const [v2, setV2] = useState('');
+  const [v3, setV3] = useState('');
+  const [v4, setV4] = useState('MID');
+  const [cost, setCost] = useState(8000);
+  const [brandName, setBrandName] = useState('라메종드미엘');
+
+  const scenarios = ['없음', '공구가', '홈쇼핑', '모바일방송가', '브랜드위크가', '상시할인가'];
+
+  const results = useMemo(() => {
+    const msrp = calculateMSRP(v1, parseFloat(v2) || 0, parseFloat(v3) || 0, v4, cost);
+    return scenarios.map(scenario => {
+      const coreChannel = scenario === '없음' ? '' : scenario;
+      const prices = calculateChannelPrices(msrp, cost, brandName, coreChannel, brandParams);
+      const lowestChannel = Object.entries(prices)
+        .filter(([ch]) => ch !== '소비자가')
+        .sort((a, b) => a[1] - b[1])[0];
+      return {
+        scenario,
+        msrp,
+        prices,
+        lowestChannel: lowestChannel ? lowestChannel[0] : '',
+        lowestPrice: lowestChannel ? lowestChannel[1] : msrp
+      };
+    });
+  }, [v1, v2, v3, v4, cost, brandName, scenarios, brandParams]);
+
+  return (
+    <div>
+      <div className="card mb-4">
+        <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>⚙️ 시나리오 설정</h2>
+        <div className="grid" style={{gridTemplateColumns:'repeat(6,1fr)',gap:'12px'}}>
+          <div>
+            <label className="label">브랜드</label>
+            <select className="input-field" value={brandName} onChange={e => setBrandName(e.target.value)}>
+              {(availableBrands || Object.keys(brandParams)).map(brand => (
+                <option key={brand} value={brand}>{brand}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">V1</label>
+            <input type="number" className="input-field" value={v1} onChange={e => setV1(parseFloat(e.target.value) || 0)} />
+          </div>
+          <div>
+            <label className="label">V2</label>
+            <input type="number" className="input-field" value={v2} onChange={e => setV2(e.target.value)} placeholder="선택" />
+          </div>
+          <div>
+            <label className="label">V3</label>
+            <input type="number" className="input-field" value={v3} onChange={e => setV3(e.target.value)} placeholder="선택" />
+          </div>
+          <div>
+            <label className="label">V4</label>
+            <select className="input-field" value={v4} onChange={e => setV4(e.target.value)}>
+              <option value="LOW">LOW</option>
+              <option value="MID">MID</option>
+              <option value="HIGH">HIGH</option>
+              <option value="PREMIUM">PREMIUM</option>
+            </select>
+          </div>
+          <div>
+            <label className="label">원가</label>
+            <input type="number" className="input-field" value={cost} onChange={e => setCost(parseFloat(e.target.value) || 0)} />
+          </div>
+        </div>
+      </div>
+
+      <div className="card mb-4">
+        <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>🎯 핵심채널별 시나리오 비교</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>시나리오</th>
+              <th style={{textAlign:'right'}}>MSRP</th>
+              <th style={{textAlign:'right'}}>최저 채널가</th>
+              <th>최저 채널</th>
+              <th style={{textAlign:'right'}}>예상 마진</th>
+            </tr>
+          </thead>
+          <tbody>
+            {results.map((result, idx) => {
+              const margin = cost ? ((result.lowestPrice / cost - 1) * 100).toFixed(1) : '—';
+              const isLowest = result.lowestPrice === Math.min(...results.map(r => r.lowestPrice));
+              return (
+                <tr key={idx} className={isLowest ? 'highlight-row' : ''}>
+                  <td>
+                    <span className="font-semibold">{result.scenario}</span>
+                    {isLowest && <span className="badge badge-success" style={{marginLeft:'8px',fontSize:'10px'}}>최저가</span>}
+                  </td>
+                  <td style={{textAlign:'right'}}>{result.msrp.toLocaleString()}</td>
+                  <td style={{textAlign:'right',fontWeight:'600',color:'#6C63FF'}}>{result.lowestPrice.toLocaleString()}</td>
+                  <td>{CHANNEL_LABELS[result.lowestChannel] || '—'}</td>
+                  <td style={{textAlign:'right',color:'#00D4AA'}}>{margin}%</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="card">
+        <h2 style={{fontSize:'18px',fontWeight:'600',marginBottom:'16px'}}>📈 모델 진화 히스토리</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>버전</th>
+              <th style={{textAlign:'right'}}>±5% 매치율</th>
+              <th style={{textAlign:'right'}}>±10% 매치율</th>
+              <th style={{textAlign:'right'}}>±15% 매치율</th>
+              <th style={{textAlign:'right'}}>평균 오차</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="text-gray">Model C (기준)</td>
+              <td style={{textAlign:'right'}}>17.0%</td>
+              <td style={{textAlign:'right'}}>34.0%</td>
+              <td style={{textAlign:'right'}}>68.0%</td>
+              <td style={{textAlign:'right'}}>15.00%</td>
+            </tr>
+            <tr>
+              <td className="text-gray">Model C+</td>
+              <td style={{textAlign:'right'}}>24.5%</td>
+              <td style={{textAlign:'right'}}>53.0%</td>
+              <td style={{textAlign:'right'}}>85.0%</td>
+              <td style={{textAlign:'right'}}>8.00%</td>
+            </tr>
+            <tr>
+              <td className="text-gray">v3.0 (4변수 앵커)</td>
+              <td style={{textAlign:'right'}}>23.8%</td>
+              <td style={{textAlign:'right'}}>47.6%</td>
+              <td style={{textAlign:'right'}}>85.7%</td>
+              <td style={{textAlign:'right'}}>9.00%</td>
+            </tr>
+            <tr>
+              <td className="text-gray">v3.1 (브랜드 보정)</td>
+              <td style={{textAlign:'right'}}>76.2%</td>
+              <td style={{textAlign:'right'}}>95.2%</td>
+              <td style={{textAlign:'right'}}>95.2%</td>
+              <td style={{textAlign:'right'}}>3.50%</td>
+            </tr>
+            <tr className="highlight-row">
+              <td className="font-bold text-success">v4.1 ✨ (Excel + 자동 세트)</td>
+              <td style={{textAlign:'right',fontWeight:'700'}}>79.2%</td>
+              <td style={{textAlign:'right',fontWeight:'700'}}>92.5%</td>
+              <td style={{textAlign:'right',fontWeight:'700'}}>96.2%</td>
+              <td style={{textAlign:'right',fontWeight:'700'}}>2.52%</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style={{marginTop:'16px',padding:'12px',background:'#6C63FF22',borderRadius:'8px'}}>
+          <div className="text-sm">
+            <span className="font-semibold text-accent">v4.1 신기능:</span> 
+            Excel 업로드 · 제품 선택 자동 입력 · 1/2/4, 1/3/6, 1/4/8 개입 세트 자동 생성
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Render
+// ═══════════════════════════════════════════════════════════════════
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
